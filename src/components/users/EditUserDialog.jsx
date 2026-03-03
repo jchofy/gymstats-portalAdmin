@@ -22,7 +22,7 @@ export function EditUserDialog({ user, open, onClose, onSaved }) {
     if (user) {
       const hasPremium = !!user.premium_until
       setIsPremium(hasPremium)
-      setPremiumUntil(hasPremium ? user.premium_until.slice(0, 10) : '')
+      setPremiumUntil(hasPremium ? String(user.premium_until).slice(0, 10) : '')
       setError('')
     }
   }, [user])

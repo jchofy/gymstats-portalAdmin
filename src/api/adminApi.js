@@ -10,8 +10,8 @@ export async function loginWithGoogle({ email, name, google_id, photo_url }) {
   return data
 }
 
-export async function getOverviewStats() {
-  const { data } = await client.post('/admin/stats/overview')
+export async function getOverviewStats(dias = 1) {
+  const { data } = await client.post('/admin/stats/overview', { dias })
   return data
 }
 

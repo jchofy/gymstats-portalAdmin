@@ -12,7 +12,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pencil, Search, ChevronLeft, ChevronRight } from 'lucide-react'
-import { PERMISSIONS } from '@/lib/constants'
 
 const PAGE_SIZE = 25
 
@@ -49,26 +48,22 @@ export function UsersTable({ users, onEdit }) {
         />
       </div>
 
-      <div className="rounded-md border">
+      {/* Desktop: tabla */}
+      <div className="hidden md:block rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Usuario</TableHead>
-              <TableHead className="hidden md:table-cell">Email</TableHead>
-              <TableHead>Permisos</TableHead>
-              <TableHead className="hidden sm:table-cell">Premium</TableHead>
-              <TableHead className="hidden lg:table-cell">Coins</TableHead>
-              <TableHead className="hidden lg:table-cell">Registrado</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Premium</TableHead>
+              <TableHead>Registrado</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginated.map((user) => {
-              const perm = PERMISSIONS[user.permisos] || PERMISSIONS[0]
-              const isPremium =
-                user.permisos !== 0 ||
-                (user.premium_until && new Date(user.premium_until) > new Date()) ||
-                (user.trial_until && new Date(user.trial_until) > new Date())
+              const isAdmin = user.permisos === 3
+              const isPremium = user.is_premium
 
               return (
                 <TableRow key={user.id}>
@@ -81,22 +76,24 @@ export function UsersTable({ users, onEdit }) {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{user.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{user.name}</p>
+                          {isAdmin && (
+                            <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0">
+                              Admin
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-xs text-muted-foreground">
                           @{user.username || 'sin-username'}
                         </p>
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
+                  <TableCell className="text-muted-foreground text-sm">
                     {user.email}
                   </TableCell>
                   <TableCell>
-                    <Badge className={`${perm.color} text-white`}>
-                      {perm.label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell">
                     {isPremium ? (
                       <Badge variant="outline" className="border-naranja text-naranja">
                         Pro
@@ -105,10 +102,7 @@ export function UsersTable({ users, onEdit }) {
                       <span className="text-sm text-muted-foreground">Free</span>
                     )}
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {user.coins ?? 0}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                  <TableCell className="text-sm text-muted-foreground">
                     {user.created_at
                       ? new Date(user.created_at).toLocaleDateString()
                       : '-'}
@@ -127,6 +121,76 @@ export function UsersTable({ users, onEdit }) {
             })}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile: cards */}
+      <div className="grid gap-3 md:hidden">
+        {paginated.map((user) => {
+          const isAdmin = user.permisos === 3
+          const isPremium = user.is_premium
+
+          return (
+            <div
+              key={user.id}
+              className="group relative rounded-lg border bg-card p-4 transition-colors hover:bg-accent/50"
+            >
+              <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10 shrink-0">
+                  <AvatarImage src={user.avatar_url} />
+                  <AvatarFallback className="text-sm">
+                    {user.name?.[0]?.toUpperCase() || '?'}
+                  </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate font-medium">{user.name}</p>
+                    {isAdmin && (
+                      <Badge className="bg-red-600 text-white text-[10px] px-1.5 py-0">
+                        Admin
+                      </Badge>
+                    )}
+                    {isPremium && !isAdmin && (
+                      <Badge variant="outline" className="border-naranja text-naranja text-[10px] px-1.5 py-0">
+                        Pro
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    @{user.username || 'sin-username'}
+                  </p>
+                  <p className="mt-1 truncate text-sm text-muted-foreground">
+                    {user.email}
+                  </p>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => onEdit(user)}
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                <span>
+                  Registrado:{' '}
+                  {user.created_at
+                    ? new Date(user.created_at).toLocaleDateString()
+                    : '-'}
+                </span>
+                {isPremium && user.premium_until && (
+                  <span>
+                    Premium hasta:{' '}
+                    {new Date(user.premium_until).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {totalPages > 1 && (

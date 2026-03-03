@@ -4,7 +4,7 @@ import { KpiCards } from '@/components/dashboard/KpiCards'
 import { UsersTrendChart } from '@/components/dashboard/UsersTrendChart'
 import { SessionsChart } from '@/components/dashboard/SessionsChart'
 import { PeakHours } from '@/components/dashboard/PeakHours'
-import { PremiumConversions } from '@/components/dashboard/PremiumConversions'
+import { ActiveUsersChart } from '@/components/dashboard/ActiveUsersChart'
 import { PeriodSelector } from '@/components/shared/PeriodSelector'
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner'
 
@@ -12,14 +12,14 @@ export function DashboardPage() {
   const [overview, setOverview] = useState(null)
   const [usersTrend, setUsersTrend] = useState(null)
   const [training, setTraining] = useState(null)
-  const [dias, setDias] = useState(30)
+  const [dias, setDias] = useState(1)
   const [loadingOverview, setLoadingOverview] = useState(true)
   const [loadingTrend, setLoadingTrend] = useState(true)
   const [loadingTraining, setLoadingTraining] = useState(true)
 
-  useEffect(() => {
+  const fetchOverview = useCallback((d) => {
     setLoadingOverview(true)
-    getOverviewStats()
+    getOverviewStats(d)
       .then((res) => res.ok && setOverview(res.data))
       .finally(() => setLoadingOverview(false))
   }, [])
@@ -39,9 +39,10 @@ export function DashboardPage() {
   }, [])
 
   useEffect(() => {
+    fetchOverview(dias)
     fetchTrend(dias)
     fetchTraining(dias)
-  }, [dias, fetchTrend, fetchTraining])
+  }, [dias, fetchOverview, fetchTrend, fetchTraining])
 
   return (
     <div className="space-y-6">
@@ -50,11 +51,11 @@ export function DashboardPage() {
         <PeriodSelector value={dias} onChange={setDias} />
       </div>
 
-      {loadingOverview ? <LoadingSpinner /> : <KpiCards data={overview} />}
+      {loadingOverview ? <LoadingSpinner /> : <KpiCards data={overview} dias={dias} />}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <UsersTrendChart data={usersTrend} loading={loadingTrend} />
-        <PremiumConversions data={usersTrend} loading={loadingTrend} />
+        <ActiveUsersChart data={training} loading={loadingTraining} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
