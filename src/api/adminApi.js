@@ -35,12 +35,10 @@ export async function getAllUsers() {
   return data
 }
 
-export async function editUser({ idUser, coins, permisos, activo = 1 }) {
+export async function editUser({ idUser, premium_until }) {
   const { data } = await client.put('/editarUsuario', {
     idUser,
-    coins,
-    permisos,
-    activo,
+    premium_until,
   })
   return data
 }

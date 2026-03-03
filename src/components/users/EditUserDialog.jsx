@@ -9,39 +9,36 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { editUser } from '@/api/adminApi'
-import { PERMISSIONS } from '@/lib/constants'
 
 export function EditUserDialog({ user, open, onClose, onSaved }) {
-  const [coins, setCoins] = useState(0)
-  const [permisos, setPermisos] = useState('0')
+  const [isPremium, setIsPremium] = useState(false)
+  const [premiumUntil, setPremiumUntil] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (user) {
-      setCoins(user.coins ?? 0)
-      setPermisos(String(user.permisos ?? 0))
+      const hasPremium = !!user.premium_until
+      setIsPremium(hasPremium)
+      setPremiumUntil(hasPremium ? user.premium_until.slice(0, 10) : '')
       setError('')
     }
   }, [user])
 
   async function handleSave() {
+    if (isPremium && !premiumUntil) {
+      setError('Selecciona una fecha de fin de premium')
+      return
+    }
+
     setSaving(true)
     setError('')
     try {
       await editUser({
         idUser: user.id,
-        coins: Number(coins),
-        permisos: Number(permisos),
-        activo: 1,
+        premium_until: isPremium ? premiumUntil : null,
       })
       onSaved()
       onClose()
@@ -59,31 +56,28 @@ export function EditUserDialog({ user, open, onClose, onSaved }) {
           <DialogTitle>Editar usuario: {user?.name}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="coins">Coins</Label>
-            <Input
-              id="coins"
-              type="number"
-              value={coins}
-              onChange={(e) => setCoins(e.target.value)}
-              min={0}
+          <div className="flex items-center justify-between">
+            <Label htmlFor="premium">Premium</Label>
+            <Switch
+              id="premium"
+              checked={isPremium}
+              onCheckedChange={(checked) => {
+                setIsPremium(checked)
+                if (!checked) setPremiumUntil('')
+              }}
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="permisos">Permisos</Label>
-            <Select value={permisos} onValueChange={setPermisos}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(PERMISSIONS).map(([val, { label }]) => (
-                  <SelectItem key={val} value={val}>
-                    {val} - {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isPremium && (
+            <div className="space-y-2">
+              <Label htmlFor="premium_until">Premium hasta</Label>
+              <Input
+                id="premium_until"
+                type="date"
+                value={premiumUntil}
+                onChange={(e) => setPremiumUntil(e.target.value)}
+              />
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{error}</p>}
         </div>
         <DialogFooter>
